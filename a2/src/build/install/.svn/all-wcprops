@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install
+END
+kernel
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/kernel
+END
+compile.sh
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/compile.sh
+END
+run
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/run
+END
+DISK1.img
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/DISK1.img
+END
+DISK2.img
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/DISK2.img
+END
+kernel-ASST1
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/kernel-ASST1
+END
+sys161.conf
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/cscc69w14/group10/a1/!svn/ver/11/src/build/install/sys161.conf
+END
