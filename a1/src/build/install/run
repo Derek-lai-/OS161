@@ -1,0 +1,9 @@
+#!/bin/bash
+
+if [ $1 = "-w" ]; then
+	OPTIONS="-w"
+else
+	OPTIONS=""
+fi
+
+sys161 $OPTIONS kernel
