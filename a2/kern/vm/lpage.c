@@ -422,11 +422,55 @@ lpage_zerofill(struct lpage **lpret)
 int
 lpage_fault(struct lpage *lp, struct addrspace *as, int faulttype, vaddr_t va)
 {
-	(void)lp;	// suppress compiler warning until code gets written
 	(void)as;	// suppress compiler warning until code gets written
 	(void)faulttype;// suppress compiler warning until code gets written
 	(void)va;	// suppress compiler warning until code gets written
-	return EUNIMP;	// suppress compiler warning until code gets written
+	
+	paddr_t pa = lp->lp_paddr & PAGE_FRAME;
+	off_t swap = lp->lp_swapaddr;
+
+	//lock the page
+	lpage_lock_and_pin(lp);
+
+	//If the page is not in RAM, load into RAM
+	if(pa == INVALID_PADDR) {
+		//unlock the page if its not 
+		lpage_unlock(lp);
+
+		//allocate a page and pin it
+		pa = coremap_allocuser(lp);
+		if(pa == INVALID_PADDR) {
+			coremap_unpin(lp->lp_paddr & PAGE_FRAME);
+			return ENOMEM;
+		}
+
+		//assert the page is pinned and lock
+		KASSERT(coremap_pageispinned(pa));
+		lock_acquire(global_paging_lock);
+
+		//fetch from disk and put in RAM
+		swap_pagein(pa, swap);
+
+		//release locks
+		lpage_lock(lp);
+		lock_release(global_paging_lock);
+
+		//make sure nobody else paged in the page
+		KASSERT((lp->lp_paddr & PAGE_FRAME) == INVALID_PADDR);
+
+		//set the pages new phyiscal address
+		lp->lp_paddr = pa;
+	}
+
+	if(faulttype == VM_FAULT_WRITE) {
+		LP_SET(lp, LPF_DIRTY);
+	}
+
+	//put a mapping into the TLB
+	mmu_map(as, va, pa, (faulttype == VM_FAULT_WRITE));
+	lpage_unlock(lp);
+
+	return 0;
 }
 
 /*

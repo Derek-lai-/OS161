@@ -92,11 +92,12 @@ struct lpage {
 /* lpage flags */
 #define LPF_DIRTY		0x1
 #define LPF_MASK		0x1	// mask for the above
+#define LPF_PINNED		0x2
 
 #define LP_ISDIRTY(lp)		((lp)->lp_paddr & LPF_DIRTY)
 
-#define LP_SET(am, bit)		((lp)->lp_paddr |= (bit))
-#define LP_CLEAR(am, bit)	((lp)->lp_paddr &= ~(paddr_t)(bit))
+#define LP_SET(lp, bit)		((lp)->lp_paddr |= (bit))
+#define LP_CLEAR(lp, bit)	((lp)->lp_paddr &= ~(paddr_t)(bit))
 
 /*
  * Functions in lpage.c

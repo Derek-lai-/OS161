@@ -39,6 +39,7 @@ fi
 
 # if the second argument is -s then run the system
 if [ "$2" == "-s" ]; then
+	cp sys161.conf ~/csc369/root
 	cd ~/csc369/root
 	sys161 $ARGS $KERNEL
 fi
