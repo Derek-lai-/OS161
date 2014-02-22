@@ -1,83 +1,0 @@
-10
-
-dir
-13
-https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a1/src/build/install/man
-https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a1
-
-
-
-2014-02-03T03:21:37.017803Z
-11
-dujaynic@UTORONTO.CA
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-91a52ada-395a-4563-91b7-a04492266c04
-
-bin
-dir
-
-testbin
-dir
-
-libc
-dir
-
-syscall
-dir
-
-index.html
-file
-
-
-
-
-2014-02-03T03:25:46.002719Z
-9ed1c9c9b1d137c1704b4ba7a2474c66
-2014-02-03T03:21:37.017803Z
-11
-dujaynic@UTORONTO.CA
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-433
-
-misc
-dir
-
-sbin
-dir
-
-dev
-dir
-
