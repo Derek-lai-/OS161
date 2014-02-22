@@ -1,101 +1,0 @@
-10
-
-dir
-13
-https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a1/src/user/bin
-https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a1
-
-
-
-2014-01-15T17:28:47.595222Z
-1
-root
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-91a52ada-395a-4563-91b7-a04492266c04
-
-true
-dir
-
-cp
-dir
-
-mv
-dir
-
-mkdir
-dir
-
-cat
-dir
-
-ln
-dir
-
-false
-dir
-
-pwd
-dir
-
-sh
-dir
-
-sync
-dir
-
-rmdir
-dir
-
-Makefile
-file
-
-
-
-
-2014-01-22T22:19:53.000166Z
-05369b27f86bc0a0792031d43901f148
-2014-01-15T17:28:47.595222Z
-1
-root
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-217
-
-ls
-dir
-
-rm
-dir
-
