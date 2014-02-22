@@ -114,6 +114,8 @@ static uint32_t num_coremap_kernel;	/* pages allocated to the kernel */
 static uint32_t num_coremap_user;	/* pages allocated to user progs */
 static uint32_t num_coremap_free;	/* pages not allocated at all */
 static uint32_t base_coremap_page;
+static uint32_t evicted;
+
 static struct coremap_entry *coremap;
 
 static volatile uint32_t ct_shootdowns_sent;
@@ -362,8 +364,19 @@ static
 uint32_t 
 page_replace(void)
 {
-    // Complete this function.
-	return 0;
+    int index;
+    int attempts = 0;
+
+    while (attempts < 5000) {
+    	index = random() % num_coremap_entries;
+    	if (coremap[index].cm_pinned == 0 && coremap[index].cm_kernel == 0) {
+    		return index;
+    	}
+    	attempts++;
+    }
+    // attempts run out of time (attempt cap)
+     panic("Cannot find an inpinned non-kernel page.\n");
+     return -1;
 }
 
 #else /* not OPT_RANDPAGE */
@@ -379,8 +392,22 @@ static
 uint32_t
 page_replace(void)
 {
-	// Complete this function.
-	return 0;
+	evicted = 0;
+	int i, index;
+
+	for (i = evicted; i < num_coremap_entries + evicted; i++) {
+		index = i % num_coremap_entries;
+		KASSERT(coremap[index].cm_allocated);
+
+		if (coremap[index].cm_pinned == 0 && coremap[index].cm_kernel == 0) {
+			evicted = index;
+			return index;
+		}
+	}
+
+	 panic("Cannot find an inpinned non-kernel page.\n");
+     return -1;
+
 }
 
 #endif /* OPT_RANDPAGE */
