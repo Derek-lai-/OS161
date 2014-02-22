@@ -1,0 +1,156 @@
+/*
+ * Process-related syscalls.
+ * New for ASST1.
+ */
+
+#include <types.h>
+#include <signal.h>
+#include <kern/errno.h>
+#include <kern/wait.h>
+#include <lib.h>
+#include <thread.h>
+#include <threadlist.h>
+#include <current.h>
+#include <pid.h>
+#include <machine/trapframe.h>
+#include <syscall.h>
+#include <kern/wait.h>
+ 
+/*
+ * sys_fork
+ * 
+ * create a new process, which begins executing in md_forkentry().
+ */
+
+
+int
+sys_fork(struct trapframe *tf, pid_t *retval)
+{
+	struct trapframe *ntf; /* new trapframe, copy of tf */
+	int result;
+
+	/*
+	 * Copy the trapframe to the heap, because we might return tocheck if item is in list
+	 * userlevel and make another syscall (changing the trapframe)
+	 * before the child runs. The child will free the copy.
+	 */
+
+	ntf = kmalloc(sizeof(struct trapframe));
+	if (ntf==NULL) {
+		return ENOMEM;
+	}
+	*ntf = *tf; /* copy the trapframe */
+
+	result = thread_fork(curthread->t_name, enter_forked_process, 
+			     ntf, 0, retval);
+	if (result) {
+		kfree(ntf);
+		return result;
+	}
+
+	return 0;
+}
+
+/*
+ * sys_getpid
+ * Placeholder to remind you to implement this.
+ */
+int
+sys_getpid(pid_t *retval)
+{
+ *retval = curthread->t_pid;
+ return 0;
+}
+
+/*
+ * sys_waitpid
+ * Placeholder comment to remind you to implement this.
+ */
+ pid_t
+ sys_waitpid(pid_t pid, int *status, int options, pid_t *retval) {
+ 	//ESRCH	The pid argument named a nonexistent process.
+
+ 	if (pid == INVALID_PID){
+ 		return ESRCH;
+ 	}
+
+ 	//EFAULT	The status argument was an invalid pointer.
+ 	if (status == NULL){
+ 		return EFAULT;
+ 	}
+
+ 	/*
+ 	EINVAL	The options argument requested invalid or unsupported options.
+ 	WNOHANG; this causes waitpid, when called for a process that has not yet 
+ 	exited, to return 0 immediately instead of waiting.
+ 	*/
+ 	if (options != 0 && options != WNOHANG){
+ 		kprintf("waitpid invalid options \n");
+ 		return EINVAL;
+ 	}
+ 	//ECHILD	The pid argument named a process that the current process was not interested in
+ 	if (pid == curthread->t_pid){
+ 		return ECHILD;
+ 	}
+
+ 	if (options == WNOHANG){
+ 		*retval = 0;
+ 	} else {
+ 		*retval = pid;
+ 	}
+ 	
+	int check = pid_join(pid, status, options);
+
+ 	//pid_join fails
+ 	if (check < 0) {
+ 		kprintf("pid join failed");
+ 		*retval = -check;
+ 		return -1;
+ 	} else {
+ 		return 0;
+ 	}
+
+ }
+
+
+/*
+ * sys_kill
+ * Placeholder comment to remind you to implement this.
+ */
+int
+sys_kill(pid_t pid, int sig){
+
+	if (sig < 1 || sig > 31){
+		return EINVAL;
+	}
+
+	if (sig != SIGHUP && sig != SIGINT && sig != SIGKILL && sig != SIGTERM && sig !=
+			SIGSTOP && sig != SIGCONT && sig != SIGWINCH && sig != SIGINFO){
+		return EUNIMP;
+	}
+
+	if (pid == INVALID_PID){
+		return ESRCH;
+	}
+
+	//////////test for zombies
+
+
+
+
+	/////////////////////////
+
+	int value = pid_set_flag(pid, sig);
+
+	if (value < 0){
+		return -1;
+	} else {
+		//if the signal is continue, wakeup the pid
+		if(sig == SIGCONT) {
+		 	pid_wakeup(pid);
+		}
+		return 0;
+	}
+
+}
+
