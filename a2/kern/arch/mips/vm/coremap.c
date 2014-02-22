@@ -375,7 +375,7 @@ page_replace(void)
     	attempts++;
     }
     // attempts run out of time (attempt cap)
-     panic("Cannot find an inpinned non-kernel page.\n");
+     panic("Cannot find an unpinned non-kernel page.\n");
      return -1;
 }
 
@@ -405,7 +405,7 @@ page_replace(void)
 		}
 	}
 
-	 panic("Cannot find an inpinned non-kernel page.\n");
+	 panic("Cannot find an unpinned non-kernel page.\n");
      return -1;
 
 }
