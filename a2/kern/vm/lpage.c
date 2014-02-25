@@ -487,5 +487,21 @@ lpage_fault(struct lpage *lp, struct addrspace *as, int faulttype, vaddr_t va)
 void
 lpage_evict(struct lpage *lp)
 {
-	(void)lp;	// suppress compiler warning until code gets written
+	paddr_t pa;
+    off_t swapaddr;
+    
+	KASSERT(lock_do_i_hold(global_paging_lock));
+	KASSERT(lp != NULL);
+    lpage_lock(lp);
+    swapaddr = lp->lp_swapaddr;
+    pa = lp->lp_paddr & PAGE_FRAME;
+	KASSERT(pa != INVALID_PADDR);
+	if (LP_ISDIRTY(lp)) {
+		lpage_unlock(lp);
+		LP_CLEAR(lp, LPF_DIRTY);
+		swap_pageout(pa, swapaddr);
+		lpage_lock(lp);
+	}
+    lp->lp_paddr = INVALID_PADDR;
+    lpage_unlock(lp);
 }
