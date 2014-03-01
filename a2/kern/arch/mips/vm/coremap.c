@@ -367,7 +367,7 @@ page_replace(void)
     int index;
     int attempts = 0;
 
-    while (attempts < 5000) {
+    while (attempts < num_coremap_entries) {
     	index = random() % num_coremap_entries;
     	if (coremap[index].cm_pinned == 0 && coremap[index].cm_kernel == 0) {
     		return index;
@@ -393,7 +393,7 @@ uint32_t
 page_replace(void)
 {
 	evicted = 0;
-	int i, index;
+	unsigned i, index;
 
 	for (i = evicted; i < num_coremap_entries + evicted; i++) {
 		index = i % num_coremap_entries;
@@ -1118,7 +1118,7 @@ coremap_pageispinned(paddr_t paddr)
 {
 	int rv;
 	unsigned ix;
-
+	
 	ix = PADDR_TO_COREMAP(paddr);
 	KASSERT(ix<num_coremap_entries);
 

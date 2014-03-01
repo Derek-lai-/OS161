@@ -422,12 +422,11 @@ lpage_zerofill(struct lpage **lpret)
 int
 lpage_fault(struct lpage *lp, struct addrspace *as, int faulttype, vaddr_t va)
 {
-	(void)as;	// suppress compiler warning until code gets written
-	(void)faulttype;// suppress compiler warning until code gets written
-	(void)va;	// suppress compiler warning until code gets written
 	
 	paddr_t pa = lp->lp_paddr & PAGE_FRAME;
 	off_t swap = lp->lp_swapaddr;
+
+	int writable = 0;
 
 	//lock the page
 	lpage_lock_and_pin(lp);
@@ -462,12 +461,16 @@ lpage_fault(struct lpage *lp, struct addrspace *as, int faulttype, vaddr_t va)
 		lp->lp_paddr = pa;
 	}
 
-	if(faulttype == VM_FAULT_WRITE) {
+	if(faulttype == VM_FAULT_WRITE || faulttype == VM_FAULT_READONLY) {
 		LP_SET(lp, LPF_DIRTY);
+		writable = 1;
 	}
 
 	//put a mapping into the TLB
-	mmu_map(as, va, pa, (faulttype == VM_FAULT_WRITE));
+	/*if(coremap_pageispinned(lp->lp_paddr) == 0) {
+		DEBUG(DB_VM, "Page is unpinned!");
+	}*/
+	mmu_map(as, va, pa, writable);
 	lpage_unlock(lp);
 
 	return 0;
