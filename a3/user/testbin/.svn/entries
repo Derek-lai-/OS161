@@ -1,0 +1,194 @@
+10
+
+dir
+3
+https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a3/user/testbin
+https://mathlab.utsc.utoronto.ca/svn/cscc69w14/group10/a3
+
+
+
+2014-03-12T13:39:08.243966Z
+1
+root
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+a134be3d-c0c4-4068-ad57-e67710009ced
+
+filetest
+dir
+
+guzzle
+dir
+
+badcall
+dir
+
+ctest
+dir
+
+matmult
+dir
+
+hash
+dir
+
+kitchen
+dir
+
+dirseek
+dir
+
+huge
+dir
+
+tail
+dir
+
+parallelvm
+dir
+
+forktest
+dir
+
+triplemat
+dir
+
+palin
+dir
+
+sink
+dir
+
+psort
+dir
+
+malloctest
+dir
+
+triplesort
+dir
+
+argtest
+dir
+
+exittest
+dir
+
+simpleforktest
+dir
+
+hog
+dir
+
+Makefile
+file
+
+
+
+
+2014-03-25T14:22:53.000597Z
+f2664759195e5dec73533bba75d96d95
+2014-03-12T13:39:08.243966Z
+1
+root
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+603
+
+sty
+dir
+
+randcall
+dir
+
+dirconc
+dir
+
+continuetest
+dir
+
+f_test
+dir
+
+farm
+dir
+
+sort
+dir
+
+add
+dir
+
+userthreads
+dir
+
+printchartest
+dir
+
+killtest
+dir
+
+crash
+dir
+
+forkbomb
+dir
+
+bigfile
+dir
+
+faulter
+dir
+
+bigexec
+dir
+
+tictac
+dir
+
+triplehuge
+dir
+
+conman
+dir
+
+rmdirtest
+dir
+
+dirtest
+dir
+
+rmtest
+dir
+

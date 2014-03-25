@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/cscc69w14/group10/a3/!svn/ver/1/kern/fs/sfs
+END
+sfs_vnops.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/cscc69w14/group10/a3/!svn/ver/1/kern/fs/sfs/sfs_vnops.c
+END
+sfs_io.c
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/cscc69w14/group10/a3/!svn/ver/1/kern/fs/sfs/sfs_io.c
+END
+sfs_fsops.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/cscc69w14/group10/a3/!svn/ver/1/kern/fs/sfs/sfs_fsops.c
+END

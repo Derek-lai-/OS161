@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/testbin/rmdirtest
+END
+.depend
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/testbin/rmdirtest/.depend
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/testbin/rmdirtest/Makefile
+END
+rmdirtest.c
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/testbin/rmdirtest/rmdirtest.c
+END

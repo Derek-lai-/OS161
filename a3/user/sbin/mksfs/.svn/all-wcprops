@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 52
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs
+END
+disk.h
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/disk.h
+END
+support.h
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/support.h
+END
+mksfs.c
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/mksfs.c
+END
+disk.c
+K 25
+svn:wc:ra_dav:version-url
+V 59
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/disk.c
+END
+.depend
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/.depend
+END
+Makefile
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/Makefile
+END
+support.c
+K 25
+svn:wc:ra_dav:version-url
+V 62
+/svn/cscc69w14/group10/a3/!svn/ver/1/user/sbin/mksfs/support.c
+END
