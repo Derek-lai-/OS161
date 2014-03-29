@@ -11,6 +11,10 @@
 #include <kern/unistd.h>
 #include <file.h>
 #include <syscall.h>
+#include <vfs.h>
+#include <current.h>
+#include <vnode.h>
+#include <kern/fcntl.h>
 
 /*** openfile functions ***/
 
@@ -26,13 +30,38 @@
 int
 file_open(char *filename, int flags, int mode, int *retfd)
 {
-	(void)filename;
-	(void)flags;
-	(void)retfd;
-	(void)mode;
+	struct openfile *file;
+	struct vnode *file_vnode;
+	int result;
 
+	//try and open the file
+	result = vfs_open(filename, flags, mode, &file_vnode);
+	if(result) {
+		vfs_close(file_vnode);
+		return result;
+	}
 
-	return EUNIMP;
+	//try and allocate space for the filetable entry
+	file = kmalloc(sizeof(struct openfile));
+	if(file == NULL) {
+		vfs_close(file_vnode);
+		return result;
+	}
+
+	//initialize the file
+	file->pos = 0;
+	file->vnode = file_vnode;
+	file->flags = flags;
+
+	//try and put into the filetable
+	result = create_filetable_entry(file, retfd);
+	if(result) {
+		vfs_close(file_vnode);
+		kfree(file);
+		return result;
+	}
+
+	return 0;
 }
 
 
@@ -45,9 +74,21 @@ file_open(char *filename, int flags, int mode, int *retfd)
 int
 file_close(int fd)
 {
-        (void)fd;
+    int result;
+    struct openfile *file;
 
-	return EUNIMP;
+    result = lookup_filetable_entry(fd, &file);
+    if(result) {
+    	return result;
+    }
+
+    vfs_close(file->vnode);
+    if(file->vnode->vn_refcount == 0) {
+    	kfree(file);
+    	curthread->t_filetable->files[fd] = NULL;
+    }
+
+	return 0;
 }
 
 /*** filetable functions ***/
@@ -70,6 +111,44 @@ file_close(int fd)
 int
 filetable_init(void)
 {
+	int fd;
+	char con[5];
+	int result;
+
+	if(curthread->t_filetable != NULL) {
+		//return an error code saying already initialized
+		return -1;
+	}
+
+	//allocate space for the table
+	curthread->t_filetable = kmalloc(sizeof(struct filetable));
+	if(curthread->t_filetable == NULL) {
+		return ENOMEM;
+	}
+
+	//set all file table entries to null
+	for(fd = 0; fd < __OPEN_MAX; fd++) {
+		curthread->t_filetable->files[fd] = NULL;
+	}
+
+	//stdin
+	strcpy(con, "con:");
+	result = file_open(con, O_RDONLY, 0, &fd);
+	if(result) {
+		return result;
+	}
+	//stdout
+	strcpy(con, "con:");
+	result = file_open(con, O_WRONLY, 0, &fd);
+	if(result) {
+		return result;
+	}
+	//stderr
+	strcpy(con, "con:");
+	result = file_open(con, O_WRONLY, 0, &fd);
+	if(result) {
+		return result;
+	}
 	return 0;
 }	
 
@@ -82,7 +161,18 @@ filetable_init(void)
 void
 filetable_destroy(struct filetable *ft)
 {
-        (void)ft;
+	int fd;
+	//if the filetable is not null
+	if(ft != NULL) {
+		//close all the files in the table
+    	for(fd = 0; fd < __OPEN_MAX; fd++) {
+    		if(ft->files[fd])
+				file_close(fd);
+			//don't care about result of file close
+		}
+	}
+	//free the table
+	kfree(ft);
 }	
 
 
@@ -94,5 +184,44 @@ filetable_destroy(struct filetable *ft)
  * the current file position) associated with that open file.
  */
 
+int
+create_filetable_entry(struct openfile *file, int *fd)
+{
+	//find the first non null space in the filetable
+	int i;
+	for(i = 0; i < __OPEN_MAX && curthread->t_filetable->files[i] != NULL; i++) {
+		continue;
+	}
+
+	//if no space in the file table, return EMFILE
+	if(i >= __OPEN_MAX) {
+		return EMFILE;
+	}
+
+	//set the filetable entry, return the filedescriptor
+	curthread->t_filetable->files[i] = file;
+	*fd = i;
+
+	return 0;
+}
+
+int
+lookup_filetable_entry(int fd, struct openfile **rtfile)
+{
+	//check that the filedescriptor is valid
+	if(fd < 0 || fd > __OPEN_MAX) {
+		return EBADF;
+	}
+
+	//check that the file is open
+	if(curthread->t_filetable->files[fd] == NULL) {
+		return EBADF;
+	}
+
+	//set the return file
+	*rtfile = curthread->t_filetable->files[fd];
+
+	return 0;
+}
 
 /* END A3 SETUP */

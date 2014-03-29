@@ -11,6 +11,12 @@
 
 struct vnode;
 
+struct openfile {
+	int pos;
+	struct vnode *vnode;
+	int flags;
+};
+
 /*
  * filetable struct
  * just an array, nice and simple.  
@@ -18,7 +24,10 @@ struct vnode;
  * array of ints is just intended to make the compiler happy.
  */
 struct filetable {
-	int changeme[__OPEN_MAX]; /* dummy type */
+	//store position, file descriptor (implied by index in array), system wide open file table index
+	//store an array of vnodes?
+
+	struct openfile *files[__OPEN_MAX]; /* dummy type */
 };
 
 /* these all have an implicit arg of the curthread's filetable */
@@ -35,6 +44,10 @@ int file_close(int fd);
  * the filetable to help implement some of the filetable-related
  * system calls.
  */
+
+int create_filetable_entry(struct openfile *file, int *fd);
+
+int lookup_filetable_entry(int fd, struct openfile **rtfile);
 
 #endif /* _FILE_H_ */
 

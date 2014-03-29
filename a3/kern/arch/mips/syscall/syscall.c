@@ -37,6 +37,7 @@
 #include <syscall.h>
 #include <kern/wait.h> /* New include of wait macros for _exit */
 #include <copyinout.h> /* A3 SETUP - new include for lseek */
+#include <file.h>
 /*
  * System call dispatcher.
  *
@@ -135,6 +136,7 @@ syscall(struct trapframe *tf)
 	    case SYS__exit:
 		    DEBUG(DB_SYSCALL, "thread %d exiting with code %d\n",
 			  curthread->t_pid, tf->tf_a0);
+		    filetable_destroy(curthread->t_filetable);
 		    thread_exit(_MKWAIT_EXIT(tf->tf_a0));
 		    panic("Returning from exit\n");
 
