@@ -1539,6 +1539,53 @@ sfs_lookup(struct vnode *v, char *path, struct vnode **ret)
 	return 0;
 }
 
+static
+int
+sfs_getdirentry(struct vnode *vn, struct uio *uio){
+	struct sfs_vnode *sv;
+	struct sfs_dir sfd;
+	int slot, result;
+	char name[SFS_NAMELEN];
+
+	KASSERT(uio->uio_rw == UIO_READ);
+	KASSERT(uio->uio_offset >= 0);
+	sv = vn->vn_data;
+
+	vfs_biglock_acquire();
+
+	if (sv->sv_i.sfi_type != SFS_TYPE_DIR) {
+		vfs_biglock_release();
+		return ENOTDIR;
+	}
+
+	slot = uio->uio_offset;
+
+	while (true) {
+		if (slot >= sfs_dir_nentries(sv)) {
+			vfs_biglock_release();
+			return 0;
+		}
+		result = sfs_readdir(sv, &sfd, slot);
+		if (result) {
+			vfs_biglock_release();
+			return result;
+		}
+		if (sfd.sfd_ino != SFS_NOINO)
+			break;
+		slot++;
+	}
+
+	strcpy(name, sfd.sfd_name);
+	vfs_biglock_release();
+	result = uiomove(name, (size_t)strlen(name) * sizeof(char), uio);
+	if (result)
+		return result;
+	uio->uio_offset = slot + 1;
+
+	return 0;
+
+}
+
 //////////////////////////////////////////////////
 
 static

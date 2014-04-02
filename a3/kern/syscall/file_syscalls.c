@@ -268,9 +268,23 @@ sys_lseek(int fd, off_t offset, int whence, off_t *retval)
 int
 sys_chdir(userptr_t path)
 {
-        (void)path;
+	char *pathname;
+	int result;
 
-	return EUNIMP;
+	if (((pathname = (char *)kmalloc(__PATH_MAX)) == NULL)) {
+		return ENOMEM;
+	}
+
+	if ((result = copyinstr(path, pathname, __PATH_MAX, NULL))) {
+		kfree(pathname);
+		return result;
+	}
+
+	if ((result = vfs_chdir(pathname))) {
+		return result;
+	}
+
+	return 0
 }
 
 /*
