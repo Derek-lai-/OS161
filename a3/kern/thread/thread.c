@@ -524,6 +524,7 @@ thread_fork(const char *name,
 {
 	struct thread *newthread;
 	int result;
+	int fd;
 
 	newthread = thread_create(name);
 	if (newthread == NULL) {
@@ -580,6 +581,19 @@ thread_fork(const char *name,
 
 	/* Lock the current cpu's run queue and make the new thread runnable */
 	thread_make_runnable(newthread, false);
+
+	/* copy over file descriptors */
+	if(curthread->t_filetable != NULL) {
+		if(newthread->t_filetable == NULL) {
+			newthread-> t_filetable = kmalloc(sizeof(struct filetable));
+			if(newthread->t_filetable == NULL) {
+				panic("Couldn't create new file table, not enough memory!");
+			}
+		}
+		for(fd = 0; fd < __OPEN_MAX; fd++) {
+			newthread->t_filetable->ft_files[fd] = curthread->t_filetable->ft_files[fd];
+		}
+	}
 
 	/*
 	 * Original comment:

@@ -12,6 +12,7 @@
 #include <file.h>
 #include <syscall.h>
 #include <vfs.h>
+#include <synch.h>
 #include <current.h>
 #include <vnode.h>
 #include <kern/fcntl.h>
@@ -49,13 +50,21 @@ file_open(char *filename, int flags, int mode, int *retfd)
 	}
 
 	//initialize the file
-	file->pos = 0;
-	file->vnode = file_vnode;
-	file->flags = flags;
+	file->of_offset = 0;
+	file->of_vnode = file_vnode;
+	file->of_flags = flags;
+	file->of_refcount = 1;
+	file->of_lock = lock_create("file lock");
+	if(file->of_lock == NULL) {
+		vfs_close(file_vnode);
+		kfree(file);
+		return ENOMEM;
+	}
 
 	//try and put into the filetable
 	result = create_filetable_entry(file, retfd);
 	if(result) {
+		lock_destroy(file->of_lock);
 		vfs_close(file_vnode);
 		kfree(file);
 		return result;
@@ -82,10 +91,19 @@ file_close(int fd)
     	return result;
     }
 
-    vfs_close(file->vnode);
-    if(file->vnode->vn_refcount == 0) {
+    lock_acquire(file->of_lock);
+
+    if(file->of_refcount == 1) {
+    	vfs_close(file->of_vnode);
+    	lock_release(file->of_lock);
+    	lock_destroy(file->of_lock);
     	kfree(file);
-    	curthread->t_filetable->files[fd] = NULL;
+    	curthread->t_filetable->ft_files[fd] = NULL;
+    } else if(file->of_refcount >= 1) {
+    	file->of_refcount--;
+    	lock_release(file->of_lock);
+
+    	return ENOTEMPTY;
     }
 
 	return 0;
@@ -128,7 +146,7 @@ filetable_init(void)
 
 	//set all file table entries to null
 	for(fd = 0; fd < __OPEN_MAX; fd++) {
-		curthread->t_filetable->files[fd] = NULL;
+		curthread->t_filetable->ft_files[fd] = NULL;
 	}
 
 	//stdin
@@ -166,7 +184,7 @@ filetable_destroy(struct filetable *ft)
 	if(ft != NULL) {
 		//close all the files in the table
     	for(fd = 0; fd < __OPEN_MAX; fd++) {
-    		if(ft->files[fd])
+    		if(ft->ft_files[fd])
 				file_close(fd);
 			//don't care about result of file close
 		}
@@ -189,7 +207,7 @@ create_filetable_entry(struct openfile *file, int *fd)
 {
 	//find the first non null space in the filetable
 	int i;
-	for(i = 0; i < __OPEN_MAX && curthread->t_filetable->files[i] != NULL; i++) {
+	for(i = 0; i < __OPEN_MAX && curthread->t_filetable->ft_files[i] != NULL; i++) {
 		continue;
 	}
 
@@ -199,7 +217,7 @@ create_filetable_entry(struct openfile *file, int *fd)
 	}
 
 	//set the filetable entry, return the filedescriptor
-	curthread->t_filetable->files[i] = file;
+	curthread->t_filetable->ft_files[i] = file;
 	*fd = i;
 
 	return 0;
@@ -214,12 +232,12 @@ lookup_filetable_entry(int fd, struct openfile **rtfile)
 	}
 
 	//check that the file is open
-	if(curthread->t_filetable->files[fd] == NULL) {
+	if(curthread->t_filetable->ft_files[fd] == NULL) {
 		return EBADF;
 	}
 
 	//set the return file
-	*rtfile = curthread->t_filetable->files[fd];
+	*rtfile = curthread->t_filetable->ft_files[fd];
 
 	return 0;
 }

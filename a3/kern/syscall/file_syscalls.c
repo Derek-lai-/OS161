@@ -153,27 +153,24 @@ sys_read(int fd, userptr_t buf, size_t size, int *retval)
 	struct uio user_uio;
 	struct iovec user_iov;
 	int result;
-	int offset = 0;
+	int offset;
+	struct openfile *file;
 
-	/* Make sure we were able to init the cons_vnode */
-	if (cons_vnode == NULL) {
-	  return ENODEV;
+	result = lookup_filetable_entry(fd, &file);
+	if(result) {
+		return result;
 	}
 
-	/* better be a valid file descriptor */
-	/* Right now, only stdin (0), stdout (1) and stderr (2)
-	 * are supported, and they can't be redirected to a file
-	 */
-	if (fd < 0 || fd > 2) {
-	  return EBADF;
-	}
+	lock_acquire(file->of_lock);
+	offset = file->of_offset;
 
 	/* set up a uio with the buffer, its size, and the current offset */
 	mk_useruio(&user_iov, &user_uio, buf, size, offset, UIO_READ);
 
 	/* does the read */
-	result = VOP_READ(cons_vnode, &user_uio);
+	result = VOP_READ(file->of_vnode, &user_uio);
 	if (result) {
+		lock_release(file->of_lock);
 		return result;
 	}
 
@@ -182,6 +179,11 @@ sys_read(int fd, userptr_t buf, size_t size, int *retval)
 	 * how much is left in it.
 	 */
 	*retval = size - user_uio.uio_resid;
+
+	//move offset to the actual bytes read
+	file->of_offset += *retval;
+
+	lock_release(file->of_lock);
 
 	return 0;
 }
@@ -208,39 +210,41 @@ sys_read(int fd, userptr_t buf, size_t size, int *retval)
 int
 sys_write(int fd, userptr_t buf, size_t len, int *retval) 
 {
-        struct uio user_uio;
-        struct iovec user_iov;
-        int result;
-        int offset = 0;
+    struct uio user_uio;
+    struct iovec user_iov;
+    int result;
+    int offset;
+    struct openfile *file;
 
-        /* Make sure we were able to init the cons_vnode */
-        if (cons_vnode == NULL) {
-          return ENODEV;
-        }
+    result = lookup_filetable_entry(fd, &file);
+    if(result) {
+    	return result;
+    }
 
-        /* Right now, only stdin (0), stdout (1) and stderr (2)
-         * are supported, and they can't be redirected to a file
-         */
-        if (fd < 0 || fd > 2) {
-          return EBADF;
-        }
+    lock_acquire(file->of_lock);
 
-        /* set up a uio with the buffer, its size, and the current offset */
-        mk_useruio(&user_iov, &user_uio, buf, len, offset, UIO_WRITE);
+    offset = file->of_offset;
 
-        /* does the write */
-        result = VOP_WRITE(cons_vnode, &user_uio);
-        if (result) {
-                return result;
-        }
+    /* set up a uio with the buffer, its size, and the current offset */
+    mk_useruio(&user_iov, &user_uio, buf, len, offset, UIO_WRITE);
 
-        /*
-         * the amount written is the size of the buffer originally,
-         * minus how much is left in it.
-         */
-        *retval = len - user_uio.uio_resid;
+    /* does the write */
+    result = VOP_WRITE(file->of_vnode, &user_uio);
+    if (result) {
+    	lock_release(file->of_lock);
+        return result;
+    }
 
-        return 0;
+    /*
+     * the amount written is the size of the buffer originally,
+     * minus how much is left in it.
+     */
+    *retval = len - user_uio.uio_resid;
+    file->of_offset += *retval;
+
+    lock_release(file->of_lock);
+
+    return 0;
 }
 
 /*
@@ -307,10 +311,41 @@ sys___getcwd(userptr_t buf, size_t buflen, int *retval)
 int
 sys_fstat(int fd, userptr_t statptr)
 {
-        (void)fd;
-        (void)statptr;
+    int result;
+    struct openfile *file;
+    struct stat *stat;
 
-	return EUNIMP;
+    struct uio user_uio;
+	struct iovec user_iov;
+
+	/* Find the file that this file descriptor corresponds to. */
+    result = lookup_filetable_entry(fd, &file);
+    if(result) {
+    	return result;
+    }
+
+    /* acquire the lock */
+    lock_acquire(file->of_lock);
+
+    /* get the stat struct for the file */
+    result = VOP_STAT(file->of_vnode, stat);
+    if(result) {
+    	return result;
+    }
+
+    /* setup the uio for transfer into userspace */
+	mk_useruio(&user_iov, &user_uio, statptr, sizeof(struct stat), 0, UIO_READ);
+
+	/* move the stat struct into the user ptr */
+	result = uiomove(&stat, sizeof(struct stat), &user_uio);
+	if(result) {
+		return result;
+	}
+
+	/* release the */
+	lock_release(file->of_lock);
+
+	return 0;
 }
 
 /*

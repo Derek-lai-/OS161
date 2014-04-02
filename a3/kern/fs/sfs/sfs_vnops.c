@@ -440,6 +440,7 @@ sfs_blockio(struct sfs_vnode *sv, struct uio *uio)
 	return result;
 }
 
+
 /*
  * Do I/O of a whole region of data, whether or not it's block-aligned.
  */
@@ -448,6 +449,7 @@ int
 sfs_io(struct sfs_vnode *sv, struct uio *uio)
 {
 	uint32_t blkoff;
+	uint32_t inloff;
 	uint32_t nblocks, i;
 	int result = 0;
 	uint32_t extraresid = 0;
@@ -474,25 +476,52 @@ sfs_io(struct sfs_vnode *sv, struct uio *uio)
 	}
 
 	/*
-	 * First, do any leading partial block.
+	 * Read from / Write to the initial inlined data
 	 */
-	blkoff = uio->uio_offset % SFS_BLOCKSIZE;
-	if (blkoff != 0) {
-		/* Number of bytes at beginning of block to skip */
-		uint32_t skip = blkoff;
+	inloff = uio->uio_offset;
+	if(inloff < SFS_INLINED_BYTES) {
+		kprintf("Writing to the inlined data\n");
+		/* bytes to skip */
+		uint32_t skip = inloff;
 
-		/* Number of bytes to read/write after that point */
-		uint32_t len = SFS_BLOCKSIZE - blkoff;
+		/* num bytes to read in the inlined data */
+		uint32_t len = SFS_INLINED_BYTES - inloff;
 
-		/* ...which might be less than the rest of the block */
-		if (len > uio->uio_resid) {
+		if(len > uio->uio_resid) {
 			len = uio->uio_resid;
 		}
 
-		/* Call sfs_partialio() to do it. */
-		result = sfs_partialio(sv, uio, skip, len);
-		if (result) {
+		/* write the stuff to the inline data */
+		result = uiomove(sv->sv_i.sfi_inlinedata+skip, len, uio);
+		if(result) {
 			goto out;
+		}
+
+		/* mark the vnode as dirty */
+		sv->sv_dirty = true;
+
+	} else {
+		/*
+		 * First, do any leading partial block.
+		 */
+		blkoff = uio->uio_offset % SFS_BLOCKSIZE;
+		if (blkoff != 0) {
+			/* Number of bytes at beginning of block to skip */
+			uint32_t skip = blkoff;
+
+			/* Number of bytes to read/write after that point */
+			uint32_t len = SFS_BLOCKSIZE - blkoff;
+
+			/* ...which might be less than the rest of the block */
+			if (len > uio->uio_resid) {
+				len = uio->uio_resid;
+			}
+
+			/* Call sfs_partialio() to do it. */
+			result = sfs_partialio(sv, uio, skip, len);
+			if (result) {
+				goto out;
+			}
 		}
 	}
 
@@ -517,7 +546,6 @@ sfs_io(struct sfs_vnode *sv, struct uio *uio)
 	 * Now do any remaining partial block at the end.
 	 */
 	KASSERT(uio->uio_resid < SFS_BLOCKSIZE);
-
 	if (uio->uio_resid > 0) {
 		result = sfs_partialio(sv, uio, 0, uio->uio_resid);
 		if (result) {

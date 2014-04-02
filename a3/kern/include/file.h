@@ -12,9 +12,11 @@
 struct vnode;
 
 struct openfile {
-	int pos;
-	struct vnode *vnode;
-	int flags;
+	off_t of_offset;
+	struct vnode *of_vnode;
+	int of_flags;
+	struct lock *of_lock;
+	int of_refcount;
 };
 
 /*
@@ -27,7 +29,7 @@ struct filetable {
 	//store position, file descriptor (implied by index in array), system wide open file table index
 	//store an array of vnodes?
 
-	struct openfile *files[__OPEN_MAX]; /* dummy type */
+	struct openfile *ft_files[__OPEN_MAX]; /* dummy type */
 };
 
 /* these all have an implicit arg of the curthread's filetable */

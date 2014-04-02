@@ -684,12 +684,14 @@ doinlinetest(const char *filesys)
 	flags = O_WRONLY|O_CREAT|O_TRUNC;
 	/* vfs_open destroys the string it's passed */
 	strcpy(buf, name);
+	kprintf("Opening the file\n");
 	err = vfs_open(buf, flags, 0664, &vn);
 	if (err) {
 		kprintf("Could not open %s for write: %s\n", 
 			name, strerror(err));
 		return;
 	}
+	kprintf("Starting the Test\n");
 	err = doinlinecreate(vn, name, (unsigned char *)buf);
 	vfs_close(vn);
 
