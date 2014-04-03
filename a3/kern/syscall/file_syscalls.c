@@ -354,12 +354,39 @@ sys_fstat(int fd, userptr_t statptr)
 int
 sys_getdirentry(int fd, userptr_t buf, size_t buflen, int *retval)
 {
-        (void)fd;
-        (void)buf;
-	(void)buflen;
-        (void)retval;
+	struct uio user_uio;
+	struct iovec user_iov;
+    struct openfile *ofile;
+    int result;
+    int offset;
+    struct vnode* vnode;
+    
+    if (fd < 0 || fd >= __OPEN_MAX) {
+      return EBADF;
+    }
 
-	return EUNIMP;
+    if ((result = filetable_findfile(fd, &ofile))) {
+        DEBUG(DB_SFS, "No open file in filetable\n");
+        return result;
+    }
+    
+    lock_acquire(ofile->of_lock);
+    offset = ofile->of_offset;
+    vnode = ofile->of_vn;
+    
+	mk_useruio(&user_iov, &user_uio, buf, buflen, offset, UIO_READ);
+        
+    if ((result = VOP_GETDIRENTRY(vnode, &user_uio))) {
+        DEBUG(DB_SFS, "VOP_GETDIRENTRY Error\n");
+        lock_release(ofile->of_lock);
+        return result;
+    }
+
+    *retval = buflen - user_uio.uio_resid;
+    ofile->of_offset = user_uio.uio_offset;
+    lock_release(ofile->of_lock);
+    
+    return 0;
 }
 
 /* END A3 SETUP */
