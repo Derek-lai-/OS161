@@ -122,11 +122,28 @@ sys_close(int fd)
 int
 sys_dup2(int oldfd, int newfd, int *retval)
 {
-        (void)oldfd;
-        (void)newfd;
-        (void)retval;
+    int temp;
+    struct openfile *openfile;
 
-	return EUNIMP;
+    if (temp = filetable_findfile(oldfd, &openfile)) {
+        return temp;
+    }
+
+    if (newfd < 0 || oldfd < 0 || newfd >= __OPEN_MAX || oldfd >= __OPEN_MAX) {
+        return EBADF;
+    }
+
+    if (curthread->t_filetable->ft_openfiles[newfd] != NULL) {
+        file_close(newfd);
+    }
+
+    curthread->t_filetable->ft_openfiles[newfd] = openfile;
+    lock_acquire(openfile->of_lock);
+    openfile->of_refcount++;
+    lock_release(openfile->of_lock);
+
+    *retval = newfd;
+    return 0;
 }
 
 /*
@@ -298,11 +315,18 @@ sys_chdir(userptr_t path)
 int
 sys___getcwd(userptr_t buf, size_t buflen, int *retval)
 {
-        (void)buf;
-        (void)buflen;
-        (void)retval;
+    int temp;
+    struct iovec user_iov;
+    struct uio user_uio;
 
-	return EUNIMP;
+    mk_useruio(&user_iov, &user_uio, buf, buflen, 0, UIO_READ);
+
+    if (temp = vfs_getcwd(&user_uio)) {
+        return temp;
+    }
+
+    *retval = buflen - user_uio.uio_resid;
+    return 0;
 }
 
 /*
